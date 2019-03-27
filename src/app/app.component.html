@@ -1,4 +1,40 @@
-<button (click)="runTraining()">Train Model</button>
-<button (click)="runTesting()">Test Model</button>
+<form (submit)="teachModel()">
+    <div>
+        <label for="inputData">Choose source data:</label>
+        <input id="inputData" type="file" accept=".json" (change)="readSource($event.target.files)"/>
+    </div>
+
+    <ng-container *ngIf="dataLoaded">
+        {{numberOfSourceRecords}} records loaded. Choose a property to learn from:
+
+        <div *ngFor="let learnProp of dataProperties; index as i">
+            <label for="learnProperty{{i}}">{{learnProp}}</label>
+            <input id="learnProperty{{i}}" type="radio" [value]="learnProp" [(ngModel)]="learnProperty" name="learnProperties"/>
+        </div>
+
+        <ng-container *ngIf="learnProperty">
+            Choose a property to estimate:
+
+            <div *ngFor="let estimateProp of dataProperties; index as i">
+                <label for="estimateProperty{{i}}">{{estimateProp}}</label>
+                <input id="estimateProperty{{i}}" type="radio" [value]="estimateProp" [(ngModel)]="estimateProperty" name="estimateProperties"/>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="estimateProperty && learnProperty">
+            <label for="testBatchSize">Test Batch Size</label>
+            <input type="number" id="testBatchSize" name="testBatchSize" [(ngModel)]="testBatchSize" min="1" [max]="numberOfSourceRecords"/>
+
+            <label for="testIterations">Number of test iterations</label>
+            <input type="number" id="testIterations" name="testIterations" [(ngModel)]="testIterations" min="1"/>
+
+            <button type="submit">Teach model</button>
+        </ng-container>
+    </ng-container>
+</form>
+
+<ng-container *ngIf="modelTaught">
+    Model taught.
+</ng-container>
 
 <router-outlet></router-outlet>
