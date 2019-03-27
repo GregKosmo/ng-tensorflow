@@ -1,0 +1,15 @@
+<select [disabled]="disabled">
+    <ng-container *ngIf="!grouped">
+        <option *ngFor="let option of options" [ngValue]="option.value" [disabled]="option.disabled">
+            {{option.key}}
+        </option>
+    </ng-container>
+
+    <ng-container *ngIf="grouped">
+        <optgroup *ngFor="let optionGroup of options" [label]="optionGroup.label" [disabled]="optionGroup.disabled">
+            <option *ngFor="let option of optionGroup.options" [ngValue]="option.value" [disabled]="option.disabled">
+                {{option.key}}
+            </option>
+        </optgroup>
+    </ng-container>
+</select>
