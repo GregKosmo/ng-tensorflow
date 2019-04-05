@@ -33,8 +33,12 @@
     </ng-container>
 </form>
 
+<ng-container *ngIf="modelLoading">
+    Teaching model...
+</ng-container>
+
 <ng-container *ngIf="modelTaught">
-    Model taught.
+    <button type="button" (click)="testModel()">Test model</button>
 </ng-container>
 
 <router-outlet></router-outlet>

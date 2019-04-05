@@ -1,34 +1,26 @@
 import { Component, OnInit } from '@angular/core';
 import * as tf from '@tensorflow/tfjs';
-import { Sequential, Tensor, Rank, History } from '@tensorflow/tfjs';
+import { Sequential, History, Tensor } from '@tensorflow/tfjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
     model: Sequential;
     sourceData: any[];
     dataProperties: string[];
     dataLoaded: boolean;
     numberOfSourceRecords: number;
     modelTaught: boolean;
+    modelLoading: boolean;
+    tensorData: TensorData;
 
     learnProperty: string;
     estimateProperty: string;
     testBatchSize = 28;
     testIterations = 50;
-    normalizedInputs: Tensor<Rank>;
-    normalizedLabels: Tensor<Rank>;
-    inputMax: Tensor<Rank>;
-    inputMin: Tensor<Rank>;
-    labelMax: Tensor<Rank>;
-    labelMin: Tensor<Rank>;
-
-    ngOnInit() {
-        this.createModel();
-    }
 
     readSource(sourceFiles: File[]) {
         let reader = new FileReader();
@@ -53,8 +45,12 @@ export class AppComponent implements OnInit {
     }
 
     async teachModel() {
-        this.setTensors(this.sourceData);
+        this.modelTaught = false;
+        this.modelLoading = true;
+        this.createModel();
+        this.tensorData = this.convertToTensor(this.sourceData);
         await this.trainModel();
+        this.modelLoading = false;
         this.modelTaught = true;
     }
 
@@ -74,7 +70,7 @@ export class AppComponent implements OnInit {
         this.model = model;
     }
 
-    setTensors(data: any[]): any {
+    convertToTensor(data: any[]): TensorData {
         return tf.tidy(() => {
             tf.util.shuffle(data);
 
@@ -84,23 +80,32 @@ export class AppComponent implements OnInit {
             let inputTensor = tf.tensor2d(inputs, [inputs.length, 1]);
             let labelTensor = tf.tensor2d(labels, [labels.length, 1]);
 
-            this.inputMax = inputTensor.max();
-            this.inputMin = inputTensor.min();
-            this.labelMax = labelTensor.max();
-            this.labelMin = labelTensor.min();
-            this.normalizedInputs = inputTensor.sub(this.inputMin).div(this.inputMax.sub(this.inputMin));
-            this.normalizedLabels = labelTensor.sub(this.labelMin).div(this.labelMax.sub(this.labelMin));
+            let inputMax = inputTensor.max();
+            let inputMin = inputTensor.min();
+            let labelMax = labelTensor.max();
+            let labelMin = labelTensor.min();
+            let normalizedInputs = inputTensor.sub(inputMin).div(inputMax.sub(inputMin));
+            let normalizedLabels = labelTensor.sub(labelMin).div(labelMax.sub(labelMin));
+
+            return {
+                inputs: normalizedInputs,
+                labels: normalizedLabels,
+                inputMax: inputMax,
+                inputMin: inputMin,
+                labelMax: labelMax,
+                labelMin: labelMin,
+            }
         })
     }
 
-    async trainModel(): Promise<History> {
+    trainModel(): Promise<History> {
         this.model.compile({
             optimizer: tf.train.adam(),
             loss: tf.losses.meanSquaredError,
             metrics: ['mse']
         });
 
-        return await this.model.fit(this.normalizedInputs, this.normalizedLabels, {
+        return this.model.fit(this.tensorData.inputs, this.tensorData.labels, {
             batchSize: this.testBatchSize,
             epochs: this.testIterations,
             shuffle: true
@@ -114,12 +119,12 @@ export class AppComponent implements OnInit {
 
             if(!(preds instanceof Array)) {
                 let unNormXs = xs
-                    .mul(this.inputMax.sub(this.inputMin))
-                    .add(this.inputMin);
+                    .mul(this.tensorData.inputMax.sub(this.tensorData.inputMin))
+                    .add(this.tensorData.inputMin);
 
                 let unNormPreds = preds
-                    .mul(this.labelMax.sub(this.labelMin))
-                    .add(this.labelMin);
+                    .mul(this.tensorData.labelMax.sub(this.tensorData.labelMin))
+                    .add(this.tensorData.labelMin);
 
                 return {
                     xs: unNormXs.dataSync(), 
@@ -131,5 +136,15 @@ export class AppComponent implements OnInit {
         let predictedPoints = Array.from(data.xs).map((val, i) => {
             return {x: val, y: data.preds[i]};
         });
+        console.log(predictedPoints);
     }
+}
+
+class TensorData {
+    inputs: Tensor;
+    labels: Tensor;
+    inputMax: Tensor;
+    inputMin: Tensor;
+    labelMax: Tensor;
+    labelMin: Tensor;
 }
