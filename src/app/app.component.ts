@@ -72,10 +72,20 @@ export class AppComponent {
 
     convertToTensor(data: any[]): TensorData {
         return tf.tidy(() => {
-            tf.util.shuffle(data);
+            let cleanData = []
 
-            let inputs = data.map(d => d[this.learnProperty]);
-            let labels = data.map(d => d[this.estimateProperty]);
+            for(let obj of data) {
+                if(obj[this.learnProperty] !== null &&
+                    obj[this.estimateProperty] !== null) {
+
+                    cleanData.push(obj);
+                }
+            }
+
+            tf.util.shuffle(cleanData);
+
+            let inputs = cleanData.map(d => d[this.learnProperty]);
+            let labels = cleanData.map(d => d[this.estimateProperty]);
 
             let inputTensor = tf.tensor2d(inputs, [inputs.length, 1]);
             let labelTensor = tf.tensor2d(labels, [labels.length, 1]);
