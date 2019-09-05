@@ -39,6 +39,25 @@
 
 <ng-container *ngIf="modelTaught">
     <button type="button" (click)="testModel()">Test model</button>
+
+    <table *ngIf="modelTested">
+        <tr>
+            <th>
+                {{learnProperty}}
+            </th>
+            <th>
+                {{estimateProperty}}
+            </th>
+        </tr>
+        <tr *ngFor="let estimation of estimations">
+            <td>
+                {{estimation.learnValue}}
+            </td>
+            <td>
+                {{estimation.estimatedValue}}
+            </td>
+        </tr>
+    </table>
 </ng-container>
 
 <router-outlet></router-outlet>

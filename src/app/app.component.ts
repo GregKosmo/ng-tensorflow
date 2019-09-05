@@ -11,11 +11,14 @@ export class AppComponent {
     model: Sequential;
     sourceData: any[];
     dataProperties: string[];
-    dataLoaded: boolean;
     numberOfSourceRecords: number;
+    tensorData: TensorData;
+    estimations: Estimation[];
+
+    dataLoaded: boolean;
     modelTaught: boolean;
     modelLoading: boolean;
-    tensorData: TensorData;
+    modelTested: boolean;
 
     learnProperty: string;
     estimateProperty: string;
@@ -143,11 +146,17 @@ export class AppComponent {
             }
         });
 
-        let predictedPoints = Array.from(data.xs).map((val, i) => {
-            return {x: val, y: data.preds[i]};
+        this.estimations = Array.from(data.xs).map((val, i) => {
+            return {learnValue: val, estimatedValue: data.preds[i]};
         });
-        console.log(predictedPoints);
+
+        this.modelTested = true;
     }
+}
+
+class Estimation {
+    learnValue: any;
+    estimatedValue: any;
 }
 
 class TensorData {
